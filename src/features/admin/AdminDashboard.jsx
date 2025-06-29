@@ -3,7 +3,7 @@ import Navbar from "../../layouts/Navbar";
 import PetTable from "./PetTable";
 import PetForm from "./PetForm";
 import RequestTable from "./RequestTable";
-import { supabase } from "../../supabaseClient"; // Adjust path if needed
+import  supabase  from "../../services/supabaseClient"; // Adjust path if needed
 import { toast } from "react-hot-toast";
 
 const AdminDashboard = () => {

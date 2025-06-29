@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import supabase from "../../services/supabaseClient";
 import { toast } from "react-hot-toast";
 
 const PetForm = ({ onSave, editingPet }) => {
@@ -10,28 +10,74 @@ const PetForm = ({ onSave, editingPet }) => {
     gender: "",
     description: "",
     image: "",
-    status: "available", // default status
+    status: "available",
   });
 
-  // If editing, load pet details into form
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   useEffect(() => {
-    if (editingPet) setForm(editingPet);
+    if (editingPet) {
+      setForm(editingPet);
+    }
   }, [editingPet]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+    }
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) return null;
+
+    setUploading(true);
+    const fileExt = imageFile.name.split(".").pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from("pet-images")
+      .upload(fileName, imageFile);
+
+    setUploading(false);
+
+    if (error) {
+      toast.error("Image upload failed");
+      console.error(error);
+      return null;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("pet-images").getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.name || !form.breed) {
+      toast.error("Name and breed are required");
+      return;
+    }
+
     try {
-      // Data validation (optional: add your own constraints)
-      if (!form.name || !form.breed || !form.image) {
-        toast.error("Name, breed, and image are required");
-        return;
+      let imageUrl = form.image;
+
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (!uploadedUrl) return; // stop if upload fails
+        imageUrl = uploadedUrl;
       }
 
-      await onSave(form); // Pass it to AdminDashboard logic
+      await onSave({ ...form, image: imageUrl });
+
       setForm({
         name: "",
         breed: "",
@@ -41,6 +87,8 @@ const PetForm = ({ onSave, editingPet }) => {
         image: "",
         status: "available",
       });
+
+      setImageFile(null);
     } catch (err) {
       toast.error("Failed to save pet");
       console.error(err);
@@ -91,14 +139,25 @@ const PetForm = ({ onSave, editingPet }) => {
         placeholder="Description"
         className="w-full p-2 border rounded"
       />
+
+      {editingPet?.image && (
+        <div className="mb-2">
+          <p className="text-sm text-gray-500">Current Image:</p>
+          <img
+            src={editingPet.image}
+            alt="Current Pet"
+            className="w-32 h-32 object-cover rounded"
+          />
+        </div>
+      )}
+
       <input
-        name="image"
-        value={form.image}
-        onChange={handleChange}
-        placeholder="Image URL"
+        type="file"
+        onChange={handleImageChange}
         className="w-full p-2 border rounded"
-        required
+        accept="image/*"
       />
+
       <select
         name="status"
         value={form.status}
@@ -112,8 +171,13 @@ const PetForm = ({ onSave, editingPet }) => {
       <button
         type="submit"
         className="bg-emerald-700 text-white px-4 py-2 rounded hover:bg-emerald-800"
+        disabled={uploading}
       >
-        {editingPet ? "Update Pet" : "Add Pet"}
+        {uploading
+          ? "Uploading..."
+          : editingPet
+          ? "Update Pet"
+          : "Add Pet"}
       </button>
     </form>
   );
