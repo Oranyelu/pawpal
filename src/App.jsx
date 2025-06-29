@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./features/admin/AdminDashboard";
 import AdoptionForm from "./pages/AdoptionForm";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Favorites from "./pages/Favorites";
 
 function App() {
   return (
@@ -30,6 +31,14 @@ function App() {
         element={
           <ProtectedRoute>
             <AdoptionForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/favorites"
+        element={
+          <ProtectedRoute>
+            <Favorites />
           </ProtectedRoute>
         }
       />

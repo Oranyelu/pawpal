@@ -1,50 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PetCard from "../components/PetCard";
 import Navbar from "../layouts/Navbar";
-
-const dummyPets = [
-  {
-    id: "1",
-    name: "Bella",
-    breed: "Golden Retriever",
-    age: 2,
-    status: "available",
-    location: "Enugu",
-    image:
-      "https://images.unsplash.com/photo-1619983081563-430f6a4fa8f6?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "2",
-    name: "Milo",
-    breed: "Persian Cat",
-    age: 3,
-    status: "adopted",
-    location: "Lagos",
-    image:
-      "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "3",
-    name: "Rocky",
-    breed: "German Shepherd",
-    age: 1,
-    status: "available",
-    location: "Abuja",
-    image:
-      "https://images.unsplash.com/photo-1601758123927-196fa7f19f08?auto=format&fit=crop&w=800&q=80",
-  },
-];
+import supabase from "../services/supabaseClient";
 
 const Home = () => {
+  const [pets, setPets] = useState([]);
   const [breedFilter, setBreedFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [location, setLocation] = useState("");
 
-  const filteredPets = dummyPets.filter((pet) => {
+  useEffect(() => {
+    const fetchPets = async () => {
+      const { data, error } = await supabase.from("pets").select("*");
+      if (!error) setPets(data);
+    };
+    fetchPets();
+  }, []);
+
+  const filteredPets = pets.filter((pet) => {
     const matchesBreed = breedFilter ? pet.breed === breedFilter : true;
     const matchesStatus = statusFilter ? pet.status === statusFilter : true;
     const matchesLocation = location
-      ? pet.location.toLowerCase().includes(location.toLowerCase())
+      ? pet.location?.toLowerCase().includes(location.toLowerCase())
       : true;
 
     return matchesBreed && matchesStatus && matchesLocation;
@@ -64,6 +41,7 @@ const Home = () => {
             className="border p-2 rounded"
           >
             <option value="">All Breeds</option>
+            {/* You can dynamically render breed options from fetched pets */}
             <option value="Golden Retriever">Golden Retriever</option>
             <option value="Persian Cat">Persian Cat</option>
             <option value="German Shepherd">German Shepherd</option>
