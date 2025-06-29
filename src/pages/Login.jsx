@@ -1,31 +1,46 @@
 import { useState } from "react";
-import { useAuth } from "../features/auth/AuthContext";
-import Navbar from "../layouts/Navbar";
+import supabase from "../services/supabaseClient";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Login = () => {
-  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    login(email, password);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Logged in successfully!");
+      navigate("/");
+    }
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-xl shadow">
-        <h2 className="text-2xl font-bold mb-4">Login</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email" className="w-full p-2 border rounded" required />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password" className="w-full p-2 border rounded" required />
-          <button className="w-full bg-emerald-600 text-white py-2 rounded">Login</button>
-        </form>
-      </div>
-    </>
+    <form onSubmit={handleLogin} className="max-w-md mx-auto mt-10 space-y-4">
+      <h2 className="text-2xl font-bold">Welcome Back</h2>
+      <input
+        type="email"
+        className="w-full border p-2 rounded"
+        placeholder="Email"
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <input
+        type="password"
+        className="w-full border p-2 rounded"
+        placeholder="Password"
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      <button type="submit" className="w-full bg-emerald-600 text-white p-2 rounded">
+        Login
+      </button>
+    </form>
   );
 };
 

@@ -1,39 +1,28 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// src/features/auth/AuthContext.jsx
+import { createContext, useContext, useEffect, useState } from "react";
+import supabase from "../../services/supabaseClient";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("pawpal_user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    const session = supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
 
-  const login = (email, password) => {
-    // Fake user
-    const dummyUser = { email, name: "PawPal User", id: 1 };
-    setUser(dummyUser);
-    localStorage.setItem("pawpal_user", JSON.stringify(dummyUser));
-    navigate("/profile");
-  };
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-  const register = (email, password) => {
-    const newUser = { email, name: "New PawPal User", id: 2 };
-    setUser(newUser);
-    localStorage.setItem("pawpal_user", JSON.stringify(newUser));
-    navigate("/profile");
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("pawpal_user");
-    navigate("/");
-  };
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, setUser }}>
       {children}
     </AuthContext.Provider>
   );
