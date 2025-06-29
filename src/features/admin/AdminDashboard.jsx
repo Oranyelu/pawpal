@@ -3,7 +3,7 @@ import Navbar from "../../layouts/Navbar";
 import PetTable from "./PetTable";
 import PetForm from "./PetForm";
 import RequestTable from "./RequestTable";
-import  supabase  from "../../services/supabaseClient"; // Adjust path if needed
+import supabase from "../../services/supabaseClient";
 import { toast } from "react-hot-toast";
 
 const AdminDashboard = () => {
@@ -11,8 +11,8 @@ const AdminDashboard = () => {
   const [pets, setPets] = useState([]);
   const [requests, setRequests] = useState([]);
   const [editingPet, setEditingPet] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🔁 Fetch pets from Supabase
   const fetchPets = async () => {
     const { data, error } = await supabase.from("pets").select("*");
     if (error) {
@@ -23,11 +23,10 @@ const AdminDashboard = () => {
     }
   };
 
-  // 🔁 Fetch adoption requests from Supabase
   const fetchRequests = async () => {
     const { data, error } = await supabase
       .from("adoption_requests")
-      .select("*, pets(name), user_email");
+      .select("id, pet_id, message, created_at, user_email, pets(name)");
 
     if (error) {
       toast.error("Failed to fetch requests");
@@ -35,7 +34,7 @@ const AdminDashboard = () => {
     } else {
       const transformed = data.map((req) => ({
         id: req.id,
-        petName: req.pets?.name ?? "Unknown",
+        petName: req.pets?.name || "Unknown",
         userEmail: req.user_email,
         message: req.message,
         createdAt: req.created_at,
@@ -44,21 +43,19 @@ const AdminDashboard = () => {
     }
   };
 
-  // 🔁 Fetch both on load
   useEffect(() => {
     fetchPets();
     fetchRequests();
   }, []);
 
-  // 💾 Save or update pet
   const handleSave = async (petData) => {
+    setIsSubmitting(true);
     try {
       if (editingPet) {
         const { error } = await supabase
           .from("pets")
           .update(petData)
           .eq("id", editingPet.id);
-
         if (error) throw error;
         toast.success("Pet updated!");
       } else {
@@ -68,17 +65,17 @@ const AdminDashboard = () => {
       }
 
       setEditingPet(null);
-      fetchPets();
+      await Promise.all([fetchPets(), fetchRequests()]);
     } catch (err) {
       toast.error("Error saving pet");
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // ✏️ Edit Pet
   const handleEdit = (pet) => setEditingPet(pet);
 
-  // 🗑 Delete pet
   const handleDelete = async (id) => {
     const { error } = await supabase.from("pets").delete().eq("id", id);
     if (error) {
@@ -95,7 +92,7 @@ const AdminDashboard = () => {
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
 
-        {/* 🧭 Tab Switcher */}
+        {/* Tabs */}
         <div className="flex space-x-4">
           <button
             className={`px-4 py-2 rounded ${
@@ -119,14 +116,35 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* 📦 Tab Content */}
+        {/* Tab Content */}
         {activeTab === "pets" ? (
           <>
-            <PetForm onSave={handleSave} editingPet={editingPet} />
-            <PetTable pets={pets} onEdit={handleEdit} onDelete={handleDelete} />
+            {editingPet?.image && (
+              <img
+                src={editingPet.image}
+                alt="Current"
+                className="w-32 h-32 object-cover rounded mb-2"
+              />
+            )}
+            <PetForm
+              onSave={handleSave}
+              editingPet={editingPet}
+              isSubmitting={isSubmitting}
+            />
+            {pets.length === 0 ? (
+              <p className="text-gray-500">No pets available yet 🐾</p>
+            ) : (
+              <PetTable pets={pets} onEdit={handleEdit} onDelete={handleDelete} />
+            )}
           </>
         ) : (
-          <RequestTable requests={requests} />
+          <>
+            {requests.length === 0 ? (
+              <p className="text-gray-500">No adoption requests yet 📨</p>
+            ) : (
+              <RequestTable requests={requests} />
+            )}
+          </>
         )}
       </div>
     </>

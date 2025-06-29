@@ -2,6 +2,7 @@ import { useState } from "react";
 import supabase from "../services/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import Navbar from "../layouts/Navbar";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -21,26 +22,35 @@ const Register = () => {
   };
 
   return (
-    <form onSubmit={handleRegister} className="max-w-md mx-auto mt-10 space-y-4">
-      <h2 className="text-2xl font-bold">Create an Account</h2>
-      <input
-        type="email"
-        className="w-full border p-2 rounded"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        className="w-full border p-2 rounded"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button type="submit" className="w-full bg-emerald-600 text-white p-2 rounded">
-        Register
-      </button>
-    </form>
+    <div>
+      <Navbar />
+      <form
+        onSubmit={handleRegister}
+        className="max-w-md mx-auto mt-10 space-y-4"
+      >
+        <h2 className="text-2xl font-bold">Create an Account</h2>
+        <input
+          type="email"
+          className="w-full border p-2 rounded"
+          placeholder="Email"
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          className="w-full border p-2 rounded"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button
+          type="submit"
+          className="w-full bg-emerald-600 text-white p-2 rounded"
+        >
+          Register
+        </button>
+      </form>
+    </div>
   );
 };
 

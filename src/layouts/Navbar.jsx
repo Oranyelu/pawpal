@@ -24,7 +24,7 @@ const Navbar = () => {
             </Link>
 
             {/* 👑 Admin-only link */}
-            {user?.email === "admin@pawpal.com" && (
+            {user?.role === "admin" && (
               <Link to="/admin" className="text-gray-700">
                 Admin
               </Link>

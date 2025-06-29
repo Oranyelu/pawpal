@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import PetDetails from "./pages/PetDetails";
 import Login from "./pages/Login";
@@ -6,18 +6,19 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./features/admin/AdminDashboard";
 import AdoptionForm from "./pages/AdoptionForm";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Favorites from "./pages/Favorites";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./features/auth/AuthContext";
 
 function App() {
+  const { user } = useAuth();
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/pet/:id" element={<PetDetails />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
-      {/* Protected Routes */}
       <Route
         path="/profile"
         element={
@@ -45,8 +46,8 @@ function App() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute adminOnly={true}>
-            <AdminDashboard />
+          <ProtectedRoute>
+            {user?.role === "admin" ? <AdminDashboard /> : <Navigate to="/" />}
           </ProtectedRoute>
         }
       />
