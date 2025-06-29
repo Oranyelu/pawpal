@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../features/auth/AuthContext";
+import toast from "react-hot-toast";
 import Navbar from "../layouts/Navbar";
 
 const dummyPets = [
@@ -24,25 +25,27 @@ const AdoptionForm = () => {
   const { user } = useAuth();
 
   const [message, setMessage] = useState("");
-  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const formData = {
+    const newRequest = {
       petId: pet.id,
       petName: pet.name,
       adopterEmail: user.email,
       message,
+      timestamp: new Date().toISOString()
     };
 
-    console.log("📤 Adoption Request:", formData);
-    setSubmitted(true);
+    // Save to localStorage mock DB
+    const existing = JSON.parse(localStorage.getItem("adoption_requests") || "[]");
+    localStorage.setItem("adoption_requests", JSON.stringify([...existing, newRequest]));
+
+    toast.success(`Request to adopt ${pet.name} sent!`);
+    setMessage("");
   };
 
-  if (!pet) {
-    return <p className="text-center mt-10">Pet not found.</p>;
-  }
+  if (!pet) return <p className="text-center mt-10">Pet not found.</p>;
 
   return (
     <>
@@ -50,38 +53,20 @@ const AdoptionForm = () => {
       <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-xl shadow">
         <h2 className="text-2xl font-bold mb-4">Adopt {pet.name}</h2>
 
-        {submitted ? (
-          <div className="text-green-600 font-medium">
-            Your adoption request for <strong>{pet.name}</strong> has been submitted!
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Your Email</label>
-              <input
-                type="email"
-                value={user.email}
-                disabled
-                className="w-full p-2 border rounded bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Why do you want to adopt {pet.name}?</label>
-              <textarea
-                rows="4"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                required
-                className="w-full p-2 border rounded"
-              ></textarea>
-            </div>
-
-            <button className="w-full bg-emerald-700 text-white py-2 rounded hover:bg-emerald-800">
-              Submit Request
-            </button>
-          </form>
-        )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="email" value={user.email} disabled className="w-full p-2 border rounded bg-gray-100" />
+          <textarea
+            rows="4"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            required
+            placeholder={`Why do you want to adopt ${pet.name}?`}
+            className="w-full p-2 border rounded"
+          />
+          <button className="w-full bg-emerald-700 text-white py-2 rounded hover:bg-emerald-800">
+            Submit Request
+          </button>
+        </form>
       </div>
     </>
   );
